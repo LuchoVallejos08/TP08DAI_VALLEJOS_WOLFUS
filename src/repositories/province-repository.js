@@ -1,132 +1,36 @@
-import { pool } from './../configs/db-config.js';
+import pool from '../configs/db-config.js';
 
-export default class PostulacionesRepository {
+const getAll = async () => {
+  const result = await pool.query('SELECT * FROM Provincias p ORDER BY p.id');
+  return result.rows;
+};
 
-    getByProvinciaIdAsync = async (id) => {
+const getById = async (id) => {
+  const result = await pool.query('SELECT * FROM Provincias WHERE id = $1', [id]);
+  return result.rows[0];
+};
 
-        let provincia = null;
+const create = async ({ name, full_name, latitude, longitude, display_order }) => {
+  const result = await pool.query(
+    `INSERT INTO Provincias (name, full_name, latitude, longitude, display_order)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [name, full_name, latitude, longitude, display_order]
+  );
+  return result.rows[0];
+};
 
-        try {
+const update = async (id, { name, full_name, latitude, longitude, display_order }) => {
+  const result = await pool.query(
+    `UPDATE Provincias SET name=$1, full_name=$2, latitude=$3, longitude=$4, display_order=$5
+     WHERE id=$6 RETURNING *`,
+    [name, full_name, latitude, longitude, display_order, id]
+  );
+  return result.rows[0];
+};
 
-            const sql = `
-                SELECT
+const remove = async (id) => {
+  const result = await pool.query('DELETE FROM Provincias WHERE id = $1 RETURNING *', [id]);
+  return result.rows[0];
+};
 
-                    p.id,
-                    p.name,
-                    p.full_name,
-                    p.latitude,
-                    p.longitude,
-                    p.display_order,
-
-                FROM provincias
-                  
-                WHERE p.id = $1
-
-            `;
-
-            const values = [id];
-
-            const result = await pool.query(sql, values);
-
-         } catch (error) {
-
-            console.log(error);
-        }
-
-        return returnArray;
-    }
-
-    getCountByTrabajoIdAsync = async (idTrabajo) => {
-
-        let returnEntity = null;
-
-        try {
-
-            const sql = `
-                SELECT COUNT(*) AS total
-                FROM postulaciones
-                WHERE id_trabajo = $1
-            `;
-
-            const values = [idTrabajo];
-
-            const result = await pool.query(sql, values);
-
-            returnEntity = result.rows[0];
-
-        } catch (error) {
-
-            console.log(error);
-        }
-
-        return returnEntity;
-    }
-
-    createAsync = async (entity) => {
-
-        let newId = 0;
-
-        try {
-
-            const sql = `
-                INSERT INTO postulaciones (
-                    id_trabajo,
-                    id_trabajador,
-                    precio_propuesto,
-                    estado,
-                    postulado_en
-                )
-                VALUES (
-                    $1,
-                    $2,
-                    $3,
-                    $4,
-                    NOW()
-                )
-                RETURNING id
-            `;
-
-            const values = [
-                entity?.id_trabajo ?? 0,
-                entity?.id_trabajador ?? 0,
-                entity?.precio_propuesto ?? null,
-                entity?.estado ?? 'pendiente'
-            ];
-
-            const result = await pool.query(sql, values);
-
-            newId = result.rows[0].id;
-
-        } catch (error) {
-
-            console.log(error);
-        }
-
-        return newId;
-    }
-
-    deleteByIdAsync = async (id) => {
-
-        let rowsAffected = 0;
-
-        try {
-
-            const sql = `
-                DELETE FROM postulaciones
-                WHERE id = $1
-            `;
-
-            const values = [id];
-
-            const result = await pool.query(sql, values);
-
-            rowsAffected = result.rowCount;
-
-        } catch (error) {
-
-            console.log(error);
-        }
-
-        return rowsAffected;
-    }
-}
+export default { getAll, getById, create, update, remove };
