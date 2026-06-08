@@ -31,12 +31,15 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/', async (req, res) => {
   try {
-    const actualizada = await provinceService.update(req.params.id, req.body);
-    res.status(StatusCodes.CREATED).json(actualizada);  // 201
+    const actualizada = await provinceService.update(req.body.id, req.body);
+    res.status(StatusCodes.CREATED).json(actualizada);
   } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error.message }); // 404
+    if (error.message.includes('no encontrada')) {
+      return res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
+    }
+    res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
   }
 });
 
